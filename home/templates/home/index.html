@@ -5,12 +5,19 @@
     <link rel="stylesheet" href="{% static 'home/css/home.css' %}">          
 {% endblock %}
 
-{% block content %}    
+{% block content %}
     <div class="row m-0">
         <div class="col-12 p-3">
-            <a class="btn btn-warning h1" href="{% url 'extractor' %}">Extract</a>               
+            <a class="btn btn-warning h1 refresh" href="{% url 'extractor' %}">Refresh</a>               
         </div>
-    </div>        
+    </div>    
+    {% for product in products %}
+        <div class="row m-0">
+            <div class="col-12">
+                <a href="{% url 'product_details' product_id=product.id %}">{{ product.id }}.{{ product.product_name }}</a>
+            </div>        
+        </div>    
+    {% endfor %}           
 {% endblock %}
 
 {% block extra_js %}              

@@ -1,16 +1,10 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, reverse, redirect, get_object_or_404
 import requests
 from bs4 import BeautifulSoup
 import time
 import math
 from .models import Products
 import json
-
-# Create your views here
-def home(request):
-    """ A view to return the home page with site request"""
-
-    return render(request, 'home/index.html')
 
 def extractor(request):
     """ A view to return the home page with site request"""
@@ -102,4 +96,29 @@ def extractor(request):
                 )
             model_product.save()        
         
-    return render(request, 'home/index.html')
+    return redirect(reverse('home'))
+
+
+def home(request):
+    """ A view to return the home page with site request"""
+    products = Products.objects.all()
+    query = []
+    for product in products:
+        y = json.loads(product.product_json)
+        query.append(y)
+    context = {
+        'products': query,    
+        }
+
+    return render(request, 'home/index.html', context)
+
+
+def product_details(request, product_id):
+    """ A view to return the product details"""
+    products = get_object_or_404(Products, id=product_id)
+    
+    context = {
+        'products': products,
+        }
+
+    return render(request, 'home/index.html', context)
