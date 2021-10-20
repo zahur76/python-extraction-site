@@ -1,11 +1,11 @@
 from django.shortcuts import render, reverse, redirect, get_object_or_404
 import requests
 from bs4 import BeautifulSoup
-import time
 import math
 from .models import Products
 import json
 import re
+from django.db.models import Q
 
 
 def extractor(request):
@@ -87,21 +87,36 @@ def extractor(request):
 
 def home(request):
     """ A view to return the home page with site request"""
-    products = Products.objects.all()
-    query = []
-    for product in products:
-        y = json.loads(product.product_json)
-        query.append(y)
-    context = {
-        'products': query,    
-        }
-
-    return render(request, 'home/index.html', context)
+    if 'q' in request.GET:
+        query = request.GET['q']
+        if not query:
+            return redirect(reverse('home'))
+        else:                
+            all_products= Products.objects.all()
+            product_query = []
+            for product in all_products:
+                product = json.loads(product.product_json)
+                if query.lower() in product['product_name'].lower():
+                    product_query.append(product)
+                      
+            context = {
+                'products': product_query,
+            }
+            return render(request, 'home/index.html', context)
+    else:
+        products = Products.objects.all()
+        query = []
+        for product in products:
+            y = json.loads(product.product_json)
+            query.append(y)
+        context = {
+            'products': query,    
+            }
+        return render(request, 'home/index.html', context)
 
 
 def product_details(request, product_id):
-    """ A view to return the product details"""
-    print(product_id)
+    """ A view to return the product details"""    
     query = get_object_or_404(Products, id=product_id)
     product = json.loads(query.product_json)
     context = {
