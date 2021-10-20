@@ -8,7 +8,10 @@
 {% block content %}
     <div class="row m-0">
         <div class="col-12 p-3">
-            <a class="btn btn-warning h1 refresh" href="{% url 'extractor' %}">Refresh</a>               
+            <a class="h3 refresh" href="{% url 'extractor' %}">URL: https://www.manomano.fr/scie-a-main-et-lames-de-scie-493</a>               
+        </div>
+        <div class="col-12 p-3">
+            <a class="btn btn-warning h1 refresh" href="{% url 'extractor' %}">Refresh Data</a>               
         </div>
     </div>    
     {% for product in products %}

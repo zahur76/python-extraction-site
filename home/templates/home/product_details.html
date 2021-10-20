@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}  
+    <link rel="stylesheet" href="{% static 'home/css/home.css' %}">          
+{% endblock %}
+
+{% block content %}
+    <div class="row m-0">
+        <div class="col-12 p-3">
+            <a class="btn btn-warning h1 refresh" href="{% url 'home' %}">Back</a>               
+        </div>
+    </div>  
+    <div class="row m-0">
+        <div class="col-12">
+            <b>Product Name: </b><span href="{% url 'product_details' product_id=product.id %}">{{ product.product_name }}</span>
+        </div>
+        <div class="col-12">
+            <b>Product URL: </b><a href="{{ product.product_url }}" target="_blank">{{ product.product_url }}</a>
+        </div>
+        <div class="col-12">
+            <b>Product IMAGE_URL: </b><a href="{{ product.product_image_url }}" target="_blank">{{ product.product_image_url }}</a>
+        </div>
+        <div class="col-12">
+            <b>Product Rating: </b><span>{{ product.product_rating }}</span>
+        </div>
+        <div class="col-12">
+            <b>Price &#8364: </b><span>{{ product.product_price }}</span>
+        </div>           
+    </div>            
+{% endblock %}
+
+{% block extra_js %}              
+    <script src="{% static 'home/js/home.js' %}" type="text/javascript"></script>
+{% endblock %}
