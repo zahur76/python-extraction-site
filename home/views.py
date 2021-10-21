@@ -48,8 +48,9 @@ def extractor(request):
         container = soup_two.find_all('a', attrs={'class':re.compile('root_'),
             'href': re.compile('/p/')})
 
-        # for x in range(0,items_per_page_two): 
-        for x in range(0,2):            
+        # for x in range(0,items_per_page_two):
+        offers = {} 
+        for x in range(0,6):            
             data =  container[x]                                       
             count += 1
             product_url = 'https://www.manomano.fr' + data.get('href')                 
@@ -84,33 +85,72 @@ def extractor(request):
             model_product.save()
 
             # Product detail page
-            options = webdriver.ChromeOptions()            
+            options = webdriver.ChromeOptions()
+            options.add_experimental_option('excludeSwitches', ['enable-logging'])            
             driver = webdriver.Chrome("C:/Users/chromedriver.exe", chrome_options=options)                         
             try:
                 driver.get(product_url)               
             except requests.exceptions.RequestException as e:
                 print(e)
-
+            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CLASS_NAME, 'CybotCookiebotDialogBodyButton')))
             driver.execute_script('return document.body.innerHTML')            
                        
             driver.find_element_by_class_name('CybotCookiebotDialogBodyButton').click()
             
-            
+                        
             main_seller= driver.find_element_by_css_selector("a[href*='/marchand-']")    
             main_seller_name = main_seller.text
-            print(main_seller_name)            
+            print(main_seller_name)
+            offers[x+1] = {1: {'sellerName': main_seller_name, 'isMainSeller': True, 'price': product_price}}           
             
-            # open-up modal using selenium          
-
-            button = driver.find_element_by_xpath("//*[text()='autres marchands']")
-            driver.execute_script("arguments[0].click();", button)
-            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='/p/']")))
+            # open-up modal using selenium with new link
             
-            offer_links = driver.find_elements_by_css_selector("a[href*='/p/']") 
-            for a in offer_links:
-                print(a.get_attribute("href"))           
-            
-            driver.quit()
+            try:
+                autres_link = driver.find_element_by_css_selector("span[class*='SellersBlock_otherSellers_']")
+                
+                print('path 1')
+                if autres_link.text == "":
+                    path = None
+                else:
+                    path = True 
+            except:
+                autres_link = driver.find_elements_by_css_selector("a[class^='sellers_text__']")                
+                print('path 2')
+                print(len(autres_link))                
+                if len(autres_link)==0 or len(autres_link)==1:
+                    path = None
+                else:
+                    path = False 
+                             
+            print(path)
+            if autres_link and path:
+                print(autres_link.text)
+                driver.execute_script("arguments[0].innerText = 'new_link'", autres_link)
+                print(autres_link.text)            
+                button = driver.find_element_by_xpath("//*[text()='new_link']")                               
+                driver.execute_script("arguments[0].click();", button)
+                # time.sleep(3) 
+                WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[class*='offer_offerLink_")))
+                offer_links = driver.find_elements_by_css_selector("a[class*='offer_offerLink_") 
+                for a in offer_links:
+                    print(a.get_attribute("href"))
+                driver.close() 
+            elif autres_link and path==False:                               
+                driver.execute_script("arguments[0].innerText = 'new_link'", autres_link[1])                                          
+                button = driver.find_element_by_xpath("//*[text()='new_link']")                
+                driver.execute_script("arguments[0].click();", button)
+                # time.sleep(3) 
+                WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[class*='offer_offerLink_")))
+                offer_links = driver.find_elements_by_css_selector("a[class*='offer_offerLink_") 
+                for a in offer_links:
+                    print(a.get_attribute("href"))
+                driver.close()  
+            else:
+                print('no-links')
+                driver.close()                 
+                
+         
+        print(offers)  
             
     return redirect(reverse('home'))
 
