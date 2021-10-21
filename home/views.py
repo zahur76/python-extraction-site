@@ -2,7 +2,8 @@ from django.shortcuts import render, reverse, redirect, get_object_or_404
 import requests
 from bs4 import BeautifulSoup
 import math
-from .models import Products
+from .models import Products, Offers
+from django.db.models import Q
 import json
 import re
 from selenium import webdriver
@@ -16,8 +17,11 @@ def extractor(request):
     """ A view to return the home page with site request"""    
 
     products = Products.objects.all()
+    offers = Offers.objects.all()
     if products:
         products.delete()
+    if offers:
+        offers.delete()
     
     url = "https://www.manomano.fr/scie-a-main-et-lames-de-scie-493" 
 
@@ -49,8 +53,9 @@ def extractor(request):
             'href': re.compile('/p/')})
 
         # for x in range(0,items_per_page_two):
-        offers = {} 
-        for x in range(0,6):            
+        
+        for x in range(0,2):
+            offers = {}             
             data =  container[x]                                       
             count += 1
             product_url = 'https://www.manomano.fr' + data.get('href')                 
@@ -69,7 +74,7 @@ def extractor(request):
             product_price_main = data.find('span', attrs={'class':re.compile('integer_')})
             product_price_decimal = data.find('span', attrs={'class':re.compile('decimal_')})
             product_price = product_price_main.text + '.' + product_price_decimal.text          
-            product_dict = {'id':count,
+            product_dict = {
                 'product_name' : product_name, 
                 'product_price': product_price,
                 'product_url': product_url,
@@ -80,6 +85,11 @@ def extractor(request):
             product_json_dict = json.dumps(product_dict)
             model_product = Products.objects.create(
                 id = count,
+                product_name = product_name,
+                product_url = product_url,
+                product_image_url = product_image_url,
+                product_rating = product_rating,
+                product_price = float(product_price),
                 product_json=product_json_dict,                           
                 )
             model_product.save()
@@ -101,7 +111,16 @@ def extractor(request):
             main_seller= driver.find_element_by_css_selector("a[href*='/marchand-']")    
             main_seller_name = main_seller.text
             print(main_seller_name)
-            offers[x+1] = {1: {'sellerName': main_seller_name, 'isMainSeller': True, 'price': product_price}}           
+            offers = {'sellerName': main_seller_name, 'isMainSeller': True, 'price': product_price}
+            offer_json = json.dumps(offers)
+            model_offers = Offers.objects.create(                
+                products = model_product,
+                seller_name = main_seller_name,
+                main_Seller = True,                
+                product_price = float(product_price),
+                offer_json=offer_json,                           
+                )
+            model_offers.save()     
             
             # open-up modal using selenium with new link
             
@@ -150,7 +169,7 @@ def extractor(request):
                 driver.close()                 
                 
          
-        print(offers)  
+            print(offers)  
             
     return redirect(reverse('home'))
 
@@ -163,24 +182,18 @@ def home(request):
             return redirect(reverse('home'))
         else:                
             all_products= Products.objects.all()
-            product_query = []
-            for product in all_products:
-                product = json.loads(product.product_json)
-                if query.lower() in product['product_name'].lower():
-                    product_query.append(product)
+            queries = Q(product_name__icontains=query)               
+            product_query = all_products.filter(queries)  
                       
             context = {
                 'products': product_query,
             }
             return render(request, 'home/index.html', context)
     else:
-        products = Products.objects.all()
-        query = []
-        for product in products:
-            y = json.loads(product.product_json)
-            query.append(y)
+        products = Products.objects.all()     
+        
         context = {
-            'products': query,    
+            'products': products,    
             }
         return render(request, 'home/index.html', context)
 
@@ -188,8 +201,10 @@ def home(request):
 def product_details(request, product_id):
     """ A view to return the product details"""    
     query = get_object_or_404(Products, id=product_id)
-    product = json.loads(query.product_json)
+    
+    all_offers = Offers.objects.all().filter(products__id=product_id)
     context = {
-        'product': product,
+        'product': query,
+        'offers': all_offers,
         }
     return render(request, 'home/product_details.html', context)

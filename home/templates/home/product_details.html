@@ -27,7 +27,10 @@
         <div class="col-12">
             <b>Price &#8364: </b><span>{{ product.product_price }}</span>
         </div>           
-    </div>            
+    </div>
+    {% for offer in offers %} 
+        {{ offer.offer_json }}
+    {% endfor %}           
 {% endblock %}
 
 {% block extra_js %}              
