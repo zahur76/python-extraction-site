@@ -110,14 +110,15 @@ def extractor(request):
             model_product.save()
 
             # Product detail page using selenium
-            options = webdriver.ChromeOptions()
+            options = webdriver.ChromeOptions()            
+            options.add_argument("--headless")
             options.add_experimental_option('excludeSwitches', ['enable-logging'])            
             driver = webdriver.Chrome("./chromedriver/chromedriver.exe", chrome_options=options)                         
             try:
                 driver.get(product_url)               
             except requests.exceptions.RequestException as e:
                 print(e)
-            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CLASS_NAME, 'CybotCookiebotDialogBodyButton')))
+            WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CLASS_NAME, 'CybotCookiebotDialogBodyButton')))
             driver.execute_script('return document.body.innerHTML')                     
             driver.find_element_by_class_name('CybotCookiebotDialogBodyButton').click()                      
             main_seller= driver.find_element_by_css_selector("a[href*='/marchand-']")    
@@ -149,9 +150,8 @@ def extractor(request):
             if autres_link and path:                
                 driver.execute_script("arguments[0].innerText = 'new_link'", autres_link)
                 button = driver.find_element_by_xpath("//*[text()='new_link']")                               
-                driver.execute_script("arguments[0].click();", button)
-                
-                WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[class*='offer_offerLink_")))
+                driver.execute_script("arguments[0].click();", button)                
+                WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[class*='offer_offerLink_")))
                 try:
                     element = driver.find_element_by_css_selector("button[class^='otherSellers_showMore_")
                     if element:
