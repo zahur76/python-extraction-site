@@ -117,7 +117,7 @@ def extractor(request):
             # Product detail page using selenium
             options = webdriver.ChromeOptions()
             options.add_experimental_option('excludeSwitches', ['enable-logging'])            
-            driver = webdriver.Chrome("C:/Users/chromedriver.exe", chrome_options=options)                         
+            driver = webdriver.Chrome("./chromedriver/chromedriver.exe", chrome_options=options)                         
             try:
                 driver.get(product_url)               
             except requests.exceptions.RequestException as e:
@@ -167,7 +167,7 @@ def extractor(request):
                 
                 try:
                     driver.find_element_by_css_selector("button[class^='otherSellers_showMore_").click()
-                    time.sleep(5)
+                    time.sleep(3)
                 except:
                     print('no button')
                 offer_links = driver.find_elements_by_css_selector("a[class*='offer_offerLink_")
@@ -191,7 +191,7 @@ def extractor(request):
                     element = driver.find_element_by_css_selector("button[class^='otherSellers_showMore_")
                     if element:
                         element.click()
-                        time.sleep(5)
+                        time.sleep(3)
                         print('other in modal exists')
                 except:
                     print('no button')
