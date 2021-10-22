@@ -9,8 +9,7 @@ class Products(models.Model):
     product_name = models.CharField(max_length=254)
     product_url = models.CharField(max_length=254, blank=True, null=True, default='None')
     product_image_url = models.CharField(max_length=254, blank=True, null=True, default='None')
-    product_rating = models.DecimalField(max_digits=2, decimal_places=1)
-    product_price = models.DecimalField(max_digits=10, decimal_places=2)
+    product_rating = models.DecimalField(max_digits=2, decimal_places=1, blank=True, null=True, default=None)    
     product_json = models.TextField() 
 
     def __str__(self):
@@ -24,7 +23,7 @@ class Offers(models.Model):
             'Products', null=False, blank=False, on_delete=models.CASCADE,
             related_name='offers')
     seller_name = models.CharField(max_length=254)
-    main_Seller = models.BooleanField(null=True)    
+    main_seller = models.BooleanField(null=True)    
     product_price = models.DecimalField(max_digits=10, decimal_places=2)
     offer_json = models.TextField()     
 

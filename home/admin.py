@@ -17,7 +17,7 @@ class OffersAdmin(admin.ModelAdmin):
         # Ordering in admin
     list_display = (
         'id',
-        'seller_name',  
+        'products',  
     )
     ordering = ('id',)
 

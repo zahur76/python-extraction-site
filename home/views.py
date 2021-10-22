@@ -12,17 +12,40 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import time
 
-
-def extractor(request):
-    """ A view to return the home page with site request"""    
-
-    products = Products.objects.all()
+def offer_details(url, product):
+    # Product detail page using beatifulsoup                         
+    try:
+        response = requests.get(url)               
+    except requests.exceptions.RequestException as e:
+        print(e)
+    soup= BeautifulSoup(response.content, "html.parser") 
+    offer_seller_name = soup.find('a', attrs={'href':re.compile('/marchand-')})
+    print(offer_seller_name.text)
+    offer_price_main = soup.find('div', attrs={'class':re.compile('price_priceContainer_')})
+    offer_price = (offer_price_main.text).split("€")[0] + "." + (offer_price_main.text).split("€")[-1]
+    print(offer_price)
+    offer_json = {'sellerName':offer_seller_name.text, 'isMainSeller': False, 'price': float(offer_price)}
+    offers = Offers.objects.create(
+        products = product,
+        seller_name = offer_seller_name.text,
+        main_seller = False,                
+        product_price = float(offer_price),
+        offer_json=offer_json,                           
+    )
+    
+def delete_products():
+    products = Products.objects.all()   
     offers = Offers.objects.all()
     if products:
         products.delete()
     if offers:
         offers.delete()
-    
+
+
+def extractor(request):
+    """ A view to return the home page with site request""" 
+    delete_products()
+
     url = "https://www.manomano.fr/scie-a-main-et-lames-de-scie-493" 
 
     # Obtain number of pages
@@ -52,9 +75,8 @@ def extractor(request):
         container = soup_two.find_all('a', attrs={'class':re.compile('root_'),
             'href': re.compile('/p/')})
 
-        # for x in range(0,items_per_page_two):
-        
-        for x in range(0,2):
+        # for x in range(0,items_per_page_two):        
+        for x in range(0,6):
             offers = {}             
             data =  container[x]                                       
             count += 1
@@ -75,8 +97,7 @@ def extractor(request):
             product_price_decimal = data.find('span', attrs={'class':re.compile('decimal_')})
             product_price = product_price_main.text + '.' + product_price_decimal.text          
             product_dict = {
-                'product_name' : product_name, 
-                'product_price': product_price,
+                'product_name' : product_name,               
                 'product_url': product_url,
                 'product_image_url': product_image_url,
                 'product_rating': product_rating,
@@ -88,13 +109,12 @@ def extractor(request):
                 product_name = product_name,
                 product_url = product_url,
                 product_image_url = product_image_url,
-                product_rating = product_rating,
-                product_price = float(product_price),
+                product_rating = product_rating,                
                 product_json=product_json_dict,                           
                 )
             model_product.save()
 
-            # Product detail page
+            # Product detail page using selenium
             options = webdriver.ChromeOptions()
             options.add_experimental_option('excludeSwitches', ['enable-logging'])            
             driver = webdriver.Chrome("C:/Users/chromedriver.exe", chrome_options=options)                         
@@ -103,11 +123,8 @@ def extractor(request):
             except requests.exceptions.RequestException as e:
                 print(e)
             WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CLASS_NAME, 'CybotCookiebotDialogBodyButton')))
-            driver.execute_script('return document.body.innerHTML')            
-                       
-            driver.find_element_by_class_name('CybotCookiebotDialogBodyButton').click()
-            
-                        
+            driver.execute_script('return document.body.innerHTML')                     
+            driver.find_element_by_class_name('CybotCookiebotDialogBodyButton').click()                      
             main_seller= driver.find_element_by_css_selector("a[href*='/marchand-']")    
             main_seller_name = main_seller.text
             print(main_seller_name)
@@ -116,17 +133,15 @@ def extractor(request):
             model_offers = Offers.objects.create(                
                 products = model_product,
                 seller_name = main_seller_name,
-                main_Seller = True,                
+                main_seller = True,                
                 product_price = float(product_price),
                 offer_json=offer_json,                           
                 )
             model_offers.save()     
             
-            # open-up modal using selenium with new link
-            
+            # open-up modal using selenium with new link            
             try:
                 autres_link = driver.find_element_by_css_selector("span[class*='SellersBlock_otherSellers_']")
-                
                 print('path 1')
                 if autres_link.text == "":
                     path = None
@@ -139,8 +154,7 @@ def extractor(request):
                 if len(autres_link)==0 or len(autres_link)==1:
                     path = None
                 else:
-                    path = False 
-                             
+                    path = False                             
             print(path)
             if autres_link and path:
                 print(autres_link.text)
@@ -148,27 +162,53 @@ def extractor(request):
                 print(autres_link.text)            
                 button = driver.find_element_by_xpath("//*[text()='new_link']")                               
                 driver.execute_script("arguments[0].click();", button)
-                # time.sleep(3) 
+                
                 WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[class*='offer_offerLink_")))
-                offer_links = driver.find_elements_by_css_selector("a[class*='offer_offerLink_") 
-                for a in offer_links:
-                    print(a.get_attribute("href"))
-                driver.close() 
+                
+                try:
+                    driver.find_element_by_css_selector("button[class^='otherSellers_showMore_").click()
+                    time.sleep(5)
+                except:
+                    print('no button')
+                offer_links = driver.find_elements_by_css_selector("a[class*='offer_offerLink_")
+                # if len(offer_links) > 4:                
+                #     WebDriverWait(driver, 10).until(EC.visibility_of_all_elements_located((By.CSS_SELECTOR, "//a[5]")))
+                if offer_links:
+                    for a in offer_links:
+                        offer_url = a.get_attribute("href")
+                        offer_details(offer_url, model_product)
+                else:
+                    driver.close()
+                driver.close()                 
             elif autres_link and path==False:                               
                 driver.execute_script("arguments[0].innerText = 'new_link'", autres_link[1])                                          
                 button = driver.find_element_by_xpath("//*[text()='new_link']")                
                 driver.execute_script("arguments[0].click();", button)
                 # time.sleep(3) 
                 WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[class*='offer_offerLink_")))
-                offer_links = driver.find_elements_by_css_selector("a[class*='offer_offerLink_") 
-                for a in offer_links:
-                    print(a.get_attribute("href"))
-                driver.close()  
+                
+                try:
+                    element = driver.find_element_by_css_selector("button[class^='otherSellers_showMore_")
+                    if element:
+                        element.click()
+                        time.sleep(5)
+                        print('other in modal exists')
+                except:
+                    print('no button')
+                
+                offer_links = driver.find_elements_by_css_selector("a[class*='offer_offerLink_")
+                # if len(offer_links) > 4:                
+                #     WebDriverWait(driver, 10).until(EC.visibility_of_all_elements_located((By.CSS_SELECTOR, "//a[5]"))) 
+                if offer_links:
+                    for a in offer_links:
+                        offer_url = a.get_attribute("href")
+                        offer_details(offer_url, model_product)
+                else:
+                    driver.close()
+                driver.close()   
             else:
                 print('no-links')
-                driver.close()                 
-                
-         
+                driver.close()       
             print(offers)  
             
     return redirect(reverse('home'))
@@ -200,9 +240,8 @@ def home(request):
 
 def product_details(request, product_id):
     """ A view to return the product details"""    
-    query = get_object_or_404(Products, id=product_id)
-    
-    all_offers = Offers.objects.all().filter(products__id=product_id)
+    query = get_object_or_404(Products, id=product_id)    
+    all_offers = Offers.objects.all().filter(products__id=product_id)    
     context = {
         'product': query,
         'offers': all_offers,
