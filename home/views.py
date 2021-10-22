@@ -21,7 +21,7 @@ def offer_details(url, product):
     soup= BeautifulSoup(response.content, "html.parser") 
     offer_seller_name = soup.find('a', attrs={'href':re.compile('/marchand-')})    
     offer_price_main = soup.find('div', attrs={'class':re.compile('price_priceContainer_')})
-    offer_price = (offer_price_main.text).split("€")[0] + "." + (offer_price_main.text).split("€")[-1]
+    offer_price = (offer_price_main.text).split("€")[0] + "." + (offer_price_main.text).split("€")[-1]    
     offer_json = {'sellerName':offer_seller_name.text, 'isMainSeller': False, 'price': float(offer_price)}
     offers = Offers.objects.create(
         products = product,
@@ -53,9 +53,8 @@ def extractor(request):
     result_two = soup_one.find('div', {'class':'Pagination_label__2nq-e'}).text.split()[0]    
     pages = math.ceil(int(result_one)/int(result_two))  
     count = 0    
-    product_dict = {}
-    # iterate over each page     
-    for page in range(1, pages+1):         
+    product_dict = {}         
+    for page in range(1, pages+1):        
         url_two = "https://www.manomano.fr/scie-a-main-et-lames-de-scie-493"               
         try:
             response_two = requests.get(url_two, {'page':page})                                               
@@ -66,18 +65,17 @@ def extractor(request):
         if page == pages:
             items_per_page_two = int(result_one) % int(result_two)        
         else:
-            items_per_page_two = int(result_two)         
+            items_per_page_two = int(result_two)
+         
         print('this is page' + ' ' + str(page))
         print('items per page is' + ' ' + str(items_per_page_two))
         container = soup_two.find_all('a', attrs={'class':re.compile('root_'),
             'href': re.compile('/p/')})
-        
-        # iterate all items on page
-        for x in range(0,items_per_page_two): 
-            offers = {}             
+              
+        for x in range(0,items_per_page_two):
             data =  container[x]                                       
             count += 1
-            print(f'this is product {count}')
+            print(f'item {count}')
             product_url = 'https://www.manomano.fr' + data.get('href')                 
             product_name = data.find('img')['alt'].split('of')[-1].replace('"', '')                                  
             product_image_url = data.find('img').get('data-src')
@@ -90,6 +88,7 @@ def extractor(request):
                 product_rating =  float(product_rating.split('/')[0])
             else:
                 product_rating = None
+
             product_price_main = data.find('span', attrs={'class':re.compile('integer_')})
             product_price_decimal = data.find('span', attrs={'class':re.compile('decimal_')})
             product_price = product_price_main.text + '.' + product_price_decimal.text          
@@ -112,17 +111,15 @@ def extractor(request):
 
             # Product detail page using selenium
             options = webdriver.ChromeOptions()
-            options.add_argument('--blink-settings=imagesEnabled=false')
-            options.add_argument("--headless")
-            options.add_experimental_option('excludeSwitches', ['enable-logging'])                    
+            options.add_experimental_option('excludeSwitches', ['enable-logging'])            
             driver = webdriver.Chrome("./chromedriver/chromedriver.exe", chrome_options=options)                         
             try:
                 driver.get(product_url)               
             except requests.exceptions.RequestException as e:
                 print(e)
-            # WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CLASS_NAME, 'CybotCookiebotDialogBodyButton')))
-            # driver.execute_script('return document.body.innerHTML')                     
-            # driver.find_element_by_class_name('CybotCookiebotDialogBodyButton').click()                      
+            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CLASS_NAME, 'CybotCookiebotDialogBodyButton')))
+            driver.execute_script('return document.body.innerHTML')                     
+            driver.find_element_by_class_name('CybotCookiebotDialogBodyButton').click()                      
             main_seller= driver.find_element_by_css_selector("a[href*='/marchand-']")    
             main_seller_name = main_seller.text            
             offers = {'sellerName': main_seller_name, 'isMainSeller': True, 'price': product_price}
@@ -134,7 +131,8 @@ def extractor(request):
                 product_price = float(product_price),
                 offer_json=offer_json,                           
                 )
-            model_offers.save()          
+            model_offers.save()     
+            
             # open-up modal using selenium with new link            
             try:
                 autres_link = driver.find_element_by_css_selector("span[class*='SellersBlock_otherSellers_']")
@@ -143,24 +141,25 @@ def extractor(request):
                 else:
                     path = True 
             except:
-                autres_link = driver.find_elements_by_css_selector("a[class^='sellers_text__']")                              
+                autres_link = driver.find_elements_by_css_selector("a[class^='sellers_text__']")                
                 if len(autres_link)==0 or len(autres_link)==1:
                     path = None
                 else:
-                    path = False   
+                    path = False                             
             if autres_link and path:                
-                driver.execute_script("arguments[0].innerText = 'new_link'", autres_link)                           
+                driver.execute_script("arguments[0].innerText = 'new_link'", autres_link)
                 button = driver.find_element_by_xpath("//*[text()='new_link']")                               
-                driver.execute_script("arguments[0].click();", button)                
-                WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[class*='offer_offerLink_")))
+                driver.execute_script("arguments[0].click();", button)
+                
+                WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[class*='offer_offerLink_")))
                 try:
-                    driver.find_element_by_css_selector("button[class^='otherSellers_showMore_").click()
+                    element = driver.find_element_by_css_selector("button[class^='otherSellers_showMore_")
                     if element:
                         element.click()
-                        time.sleep(3)
+                        time.sleep(5)
                 except:
-                    pass                    
-                offer_links = driver.find_elements_by_css_selector("a[class*='offer_offerLink_")               
+                    pass
+                offer_links = driver.find_elements_by_css_selector("a[class*='offer_offerLink_")                
                 if offer_links:
                     for a in offer_links:
                         offer_url = a.get_attribute("href")
@@ -171,13 +170,13 @@ def extractor(request):
             elif autres_link and path==False:                               
                 driver.execute_script("arguments[0].innerText = 'new_link'", autres_link[1])                                          
                 button = driver.find_element_by_xpath("//*[text()='new_link']")                
-                driver.execute_script("arguments[0].click();", button)
+                driver.execute_script("arguments[0].click();", button)                
                 WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[class*='offer_offerLink_")))
                 try:
                     element = driver.find_element_by_css_selector("button[class^='otherSellers_showMore_")
                     if element:
                         element.click()
-                        time.sleep(3)                        
+                        time.sleep(5)                        
                 except:
                     pass
                 
