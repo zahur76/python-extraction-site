@@ -53,8 +53,9 @@ def extractor(request):
     result_two = soup_one.find('div', {'class':'Pagination_label__2nq-e'}).text.split()[0]    
     pages = math.ceil(int(result_one)/int(result_two))  
     count = 0    
-    product_dict = {}         
-    for page in range(1, pages+1):        
+    product_dict = {}
+    # for page in range(1, pages+1):          
+    for page in range(1, 2):        
         url_two = "https://www.manomano.fr/scie-a-main-et-lames-de-scie-493"               
         try:
             response_two = requests.get(url_two, {'page':page})                                               
@@ -71,8 +72,8 @@ def extractor(request):
         print('items per page is' + ' ' + str(items_per_page_two))
         container = soup_two.find_all('a', attrs={'class':re.compile('root_'),
             'href': re.compile('/p/')})
-              
-        for x in range(0,items_per_page_two):
+        # for x in range(0,items_per_page_two):    
+        for x in range(0,5):
             data =  container[x]                                       
             count += 1
             print(f'item {count}')
@@ -112,6 +113,7 @@ def extractor(request):
             # Product detail page using selenium
             options = webdriver.ChromeOptions()            
             options.add_argument("--headless")
+            options.add_argument('--blink-settings=imagesEnabled=false')
             options.add_experimental_option('excludeSwitches', ['enable-logging'])            
             driver = webdriver.Chrome("./chromedriver/chromedriver.exe", chrome_options=options)                         
             try:
@@ -138,16 +140,21 @@ def extractor(request):
             try:
                 autres_link = driver.find_element_by_css_selector("span[class*='SellersBlock_otherSellers_']")
                 if autres_link.text == "":
-                    path = None
+                    path = 3
+                    print('path 3')
                 else:
-                    path = True 
+                    path = 1
+                    print('path 1')
             except:
                 autres_link = driver.find_elements_by_css_selector("a[class^='sellers_text__']")                
-                if len(autres_link)==0 or len(autres_link)==1:
-                    path = None
+                if len(autres_link)<=1:
+                    path = 3
+                    print('path 3')
                 else:
-                    path = False                             
-            if autres_link and path:                
+                    path = 2
+                    print('path 2')                             
+            if path==1:
+                print('using path 1')                
                 driver.execute_script("arguments[0].innerText = 'new_link'", autres_link)
                 button = driver.find_element_by_xpath("//*[text()='new_link']")                               
                 driver.execute_script("arguments[0].click();", button)                
@@ -167,7 +174,7 @@ def extractor(request):
                 else:
                     driver.close()
                 driver.close()                 
-            elif autres_link and path==False:                               
+            elif path==2:                               
                 driver.execute_script("arguments[0].innerText = 'new_link'", autres_link[1])                                          
                 button = driver.find_element_by_xpath("//*[text()='new_link']")                
                 driver.execute_script("arguments[0].click();", button)                
