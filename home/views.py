@@ -48,13 +48,29 @@ def delete_products():
     if offers:
         offers.delete()
 
+def database(request):
+    try:
+        url = "https://www.manomano.fr/scie-a-main-et-lames-de-scie-493"
+        response_one = requests.get(url)
+        soup_one= BeautifulSoup(response_one.content, "html.parser")
+        total_count = soup_one.find('div', {'class':'Pagination_label__2nq-e'}).text.split()[-1]
+        products = Products.objects.all()
+        count = products.count()
+        print(count)
+        json_response = {'count': count, 'total_count': total_count}
+        return HttpResponse(json.dumps(json_response),
+                content_type='application/json')
+    except Exception as error:
+        json_response = {}
+        return HttpResponse(json.dumps(json_response),
+                content_type='application/json')
+
 def extractor(request):
     """ A view to return the home page with site request"""
     delete_products()
-
-    url = "https://www.manomano.fr/scie-a-main-et-lames-de-scie-493"
-
+    
     # Obtain number of pages
+    url = "https://www.manomano.fr/scie-a-main-et-lames-de-scie-493"
     response_one = requests.get(url)
     soup_one= BeautifulSoup(response_one.content, "html.parser")
     result_one = soup_one.find('div', {'class':'Pagination_label__2nq-e'}).text.split()[-1]
@@ -79,29 +95,32 @@ def extractor(request):
         print('items per page is' + ' ' + str(items_per_page_two))
         container = soup_two.find_all('a', attrs={'class':re.compile('root_'),
             'href': re.compile('/p/')})
-        for item in range(0,items_per_page_two):
+        items_on_page = len(container)
+        for item in range(0, items_on_page):
             try:
                 data =  container[item]
                 count += 1
                 print(f'item {count}')
                 product_url = 'https://www.manomano.fr' + data.get('href')
-                product_name = data.find('img')['alt'].split('of')[-1].replace('"', '')
-                product_image_url = data.find('img').get('data-src')
+                # product_name = data.find('img')['alt'].split('of', 1)[-1].replace('"', '')
+                product_name = data.find('div', attrs={'class':re.compile('title_')})
+                product_image_url = data.find('img').get('src')
+                if 'https://cdn.' not in product_image_url:
+                    product_image_url = data.find('img').get('data-src')
                 try:
                     product_rating = data.find('span', attrs={'class':re.compile(
                         'stars_')}).get('aria-label')
                 except:
                     product_rating = None
-
                 if product_rating:
                     product_rating =  float(product_rating.split('/')[0])
                 else:
                     product_rating = None
                 product_price_main = data.find('span', attrs={'class':re.compile('integer_')})
                 product_price_decimal = data.find('span', attrs={'class':re.compile('decimal_')})
-                product_price = product_price_main.text + '.' + product_price_decimal.text
+                product_price = product_price_main.text.replace(' ', '') + '.' + product_price_decimal.text
                 product_dict = {
-                    'product_name' : product_name,
+                    'product_name' : product_name.text,
                     'product_url': product_url,
                     'product_image_url': product_image_url,
                     'product_rating': product_rating,
@@ -109,7 +128,7 @@ def extractor(request):
                 product_json_dict = json.dumps(product_dict)
                 model_product = Products.objects.create(
                     id = count,
-                    product_name = product_name,
+                    product_name = product_name.text,
                     product_url = product_url,
                     product_image_url = product_image_url,
                     product_rating = product_rating,
@@ -226,7 +245,7 @@ def extractor(request):
                     driver.quit()
                 else:
                     driver.close()
-                    driver.quit()
+                    driver.quit()                
                 print(offers)
             except Exception as error:
                 print(str(error))
@@ -254,7 +273,6 @@ def home(request):
         'products': products,
         }
     return render(request, 'home/index.html', context)
-
 
 def product_details(request, product_id):
     """ A view to return the product details"""

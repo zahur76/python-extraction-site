@@ -6,6 +6,7 @@
 {% endblock %}
 
 {% block content %}
+    <div class="token">{% csrf_token %}</div>
     <div class="row m-0">
         <div class="col-12 p-3">
             <div>Link: https://www.manomano.fr/scie-a-main-et-lames-de-scie-493</div>               
@@ -22,11 +23,11 @@
             </div>      
         </div>
         <div class="col-12 mt-3">
-            <a class="btn btn-info h1 refresh" href="{% url 'home' %}">Reset Search</a>               
+            <a class="btn btn-info h1" href="{% url 'home' %}">Reset Search</a>               
         </div>         
-        <div class="col-4 mt-3">
+        <div class="col-12 mt-3">
             <a class="btn btn-warning h1 refresh" href="{% url 'extractor' %}">Refresh Data</a>               
-        </div>       
+        </div>              
         <div class="col-12 text-center h4">{{ count }} Products</div>              
     </div>    
     {% for product in products %}        
