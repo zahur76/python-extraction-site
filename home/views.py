@@ -60,15 +60,12 @@ def database(request):
         json_response = {'count': count, 'total_count': total_count}
         return HttpResponse(json.dumps(json_response),
                 content_type='application/json')
-    except Exception as error:
-        json_response = {}
-        return HttpResponse(json.dumps(json_response),
-                content_type='application/json')
+    except Exception as error:        
+        return HttpResponse(status=200)
 
 def extractor(request):
     """ A view to return the home page with site request"""
     delete_products()
-    
     # Obtain number of pages
     url = "https://www.manomano.fr/scie-a-main-et-lames-de-scie-493"
     response_one = requests.get(url)
@@ -89,10 +86,7 @@ def extractor(request):
         if page == pages:
             items_per_page_two = int(result_one) % int(result_two)
         else:
-            items_per_page_two = int(result_two)
-
-        print('this is page' + ' ' + str(page))
-        print('items per page is' + ' ' + str(items_per_page_two))
+            items_per_page_two = int(result_two)        
         container = soup_two.find_all('a', attrs={'class':re.compile('root_'),
             'href': re.compile('/p/')})
         items_on_page = len(container)
@@ -118,7 +112,8 @@ def extractor(request):
                     product_rating = None
                 product_price_main = data.find('span', attrs={'class':re.compile('integer_')})
                 product_price_decimal = data.find('span', attrs={'class':re.compile('decimal_')})
-                product_price = product_price_main.text.replace(' ', '') + '.' + product_price_decimal.text
+                product_price = product_price_main.text.replace(
+                    ' ', '') + '.' + product_price_decimal.text
                 product_dict = {
                     'product_name' : product_name.text,
                     'product_url': product_url,
@@ -169,18 +164,14 @@ def extractor(request):
                         "span[class*='SellersBlock_otherSellers_']")
                     if autres_link.text == "":
                         path = 3
-                        print('path 3')
                     else:
                         path = 1
-                        print('path 1')
                 except:
                     autres_link = driver.find_elements_by_css_selector("a[class^='sellers_text__']")
                     if len(autres_link)<=1:
                         path = 3
-                        print('path 3')
                     else:
                         path = 2
-                        print('path 2')
                 if path==1:
                     print('using path 1')
                     driver.execute_script("arguments[0].innerText = 'new_link'", autres_link)
@@ -245,7 +236,7 @@ def extractor(request):
                     driver.quit()
                 else:
                     driver.close()
-                    driver.quit()                
+                    driver.quit()
                 print(offers)
             except Exception as error:
                 print(str(error))

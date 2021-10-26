@@ -26,20 +26,42 @@
             <b>Product Rating: </b><span>{{ product.product_rating }}</span>
         </div>                 
     </div>
-    <div class="col-12 h4 text-center border-bottom">SELLERS</div>    
-    <div class="row m-0">
-        
-        {% for offer in offers %}            
-            <div class="col-4">
-                <b>Seller Name: </b><span>{{ offer.seller_name }}</span>
-            </div> 
-            <div class="col-4">                
-                <b>Is Main Seller: </b><span>{{ offer.main_seller }}</span>
-            </div> 
-            <div class="col-4">
-                <b>Price: </b><span>{{ offer.product_price}}</span>
-            </div> 
-        {% endfor %}
+    <div class="col-12 h4 text-center border-bottom">SELLERS</div>
+    <div class="row m-0 border-bottom text-center">   
+        <div class="col-4">
+            <b>Seller Name</b>
+        </div> 
+        <div class="col-4">                
+            <b>Is Main Seller</b>
+        </div> 
+        <div class="col-4">
+            <b>Price</b>
+        </div> 
+    </div>    
+    <div class="row m-0 text-center">              
+        {% for offer in offers %}
+            {% if forloop.counter|divisibleby:2 %}             
+                <div class="col-4">
+                    {{ offer.seller_name }}
+                </div> 
+                <div class="col-4">                
+                    {{ offer.main_seller }}
+                </div> 
+                <div class="col-4">
+                    {{ offer.product_price}}
+                </div>
+            {% else %}                          
+                <div class="col-4 bg-secondary">
+                    {{ offer.seller_name }}
+                </div> 
+                <div class="col-4 bg-secondary">                
+                    {{ offer.main_seller }}
+                </div> 
+                <div class="col-4 bg-secondary">
+                    {{ offer.product_price}}
+                </div>  
+            {% endif %}
+       {% endfor %}        
    </div>
             
 {% endblock %}
