@@ -12,7 +12,7 @@
             <div>Link: https://www.manomano.fr/scie-a-main-et-lames-de-scie-493</div>               
         </div>
         <div class="row m-0 p-0 border-top d-flex justify-content-left">
-            <div class="col-10 col-md-4 col-lg-3 mt-2">
+            <div class="col-8 col-md-4 col-lg-4 mt-2">
                 <form action="{% url 'home' %}" method="GET" id="characterForm">
                     {% csrf_token %}
                     <div class="input-group">
@@ -20,14 +20,13 @@
                         <button class="btn btn-outline-dark bg-dark text-light rounded-0 input-group-append ml-auto search-button" type="submit"><div class="text">Search</div></button>
                     </div>                
                 </form> 
-            </div>      
+            </div> 
+            <a class="col-4 col-md-2 col-lg-2 btn btn-info h1 mt-2" href="{% url 'home' %}">Reset Search</a>      
         </div>
         <div class="col-12 mt-3">
-            <a class="btn btn-info h1" href="{% url 'home' %}">Reset Search</a>               
-        </div>         
-        <div class="col-12 mt-3">
-            <a class="btn btn-warning h1 refresh" href="{% url 'extractor' %}">Refresh Data</a>               
-        </div>              
+            <a class="btn btn-warning h1 refresh" href="{% url 'extractor' %}">Refresh Data</a>
+            <a class="btn btn-success h1 refresh" href="{% url 'save_database' %}">Save database</a>                                       
+        </div>                      
         <div class="col-12 text-center h4">{{ count }} Products</div>              
     </div>    
     {% for product in products %}        

@@ -6,6 +6,7 @@ import math
 import json
 import re
 import time
+from random import randint
 from django.shortcuts import (
     render, reverse, redirect, get_object_or_404, HttpResponse)
 import requests
@@ -15,11 +16,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from django.db.models import Q
+from django.core import serializers
 from .models import Products, Offers
 
 
 def offer_details(url, product):
-    # Product detail page using beatifulsoup
+    """
+    function to save product offers to database
+    """
     try:
         response = requests.get(url)
     except requests.exceptions.RequestException as error:
@@ -41,6 +45,9 @@ def offer_details(url, product):
     return  HttpResponse(status=200)
 
 def delete_products():
+    """
+    function to delete product and offer database
+    """
     products = Products.objects.all()
     offers = Offers.objects.all()
     if products:
@@ -48,7 +55,43 @@ def delete_products():
     if offers:
         offers.delete()
 
+def save_database(request):
+    """
+    function to save database as json
+    """
+    products_dict = {}
+    offers_dict = {}
+    filename_one = 'A' + time.strftime("%Y%m%d-%H%M%S")
+    filename_two = 'B' + time.strftime("%Y%m%d-%H%M%S")
+    products = Products.objects.all()
+    offers = Offers.objects.all()
+    count = 0
+    for product in products:
+        count += 1
+        products_dict[count] = {'product_name': product.product_name,
+                                'product_url': product.product_url,
+                                'product_image_url': product.product_image_url,
+                                'product_rating': str(product.product_rating),
+                            }
+    print(offers[1].products.product_name)
+    count = 0
+    for offer in offers:        
+        count += 1
+        offers_dict[count] = {'product': offer.products.product_name,
+                                'seller_name': offer.seller_name,
+                                'main_seller': offer.main_seller,
+                                'product_price': str(offer.product_price),
+                            }
+    with open(f'data/{filename_one}.json', 'w') as out:
+        json.dump(products_dict, out)
+    with open(f'data/{filename_two}.json', 'w') as out:
+        json.dump(offers_dict, out)
+    return redirect(reverse('home'))
+
 def database(request):
+    """
+    View to show progress bar on loading screen
+    """
     try:
         url = "https://www.manomano.fr/scie-a-main-et-lames-de-scie-493"
         response_one = requests.get(url)
@@ -60,11 +103,11 @@ def database(request):
         json_response = {'count': count, 'total_count': total_count}
         return HttpResponse(json.dumps(json_response),
                 content_type='application/json')
-    except Exception as error:        
+    except Exception as error:
         return HttpResponse(status=200)
 
 def extractor(request):
-    """ A view to return the home page with site request"""
+    """ Main view to save product and offer details to database"""
     delete_products()
     # Obtain number of pages
     url = "https://www.manomano.fr/scie-a-main-et-lames-de-scie-493"
@@ -82,11 +125,6 @@ def extractor(request):
         except requests.exceptions.RequestException as error:
             print(error)
         soup_two = BeautifulSoup(response_two.content, "html.parser")
-        # items per page
-        if page == pages:
-            items_per_page_two = int(result_one) % int(result_two)
-        else:
-            items_per_page_two = int(result_two)        
         container = soup_two.find_all('a', attrs={'class':re.compile('root_'),
             'href': re.compile('/p/')})
         items_on_page = len(container)
