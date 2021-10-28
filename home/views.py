@@ -2,11 +2,11 @@
     All imports
 """
 import concurrent.futures
+import codecs
 import math
 import json
 import re
 import time
-from random import randint
 from django.shortcuts import (
     render, reverse, redirect, get_object_or_404, HttpResponse)
 import requests
@@ -59,8 +59,8 @@ def save_database(request):
     """
     function to save database as json
     """
-    products_dict = {}
-    offers_dict = {}
+    products_dict = []
+    offers_dict = []
     filename_one = 'A' + time.strftime("%Y%m%d-%H%M%S")
     filename_two = 'B' + time.strftime("%Y%m%d-%H%M%S")
     products = Products.objects.all()
@@ -68,24 +68,27 @@ def save_database(request):
     count = 0
     for product in products:
         count += 1
-        products_dict[count] = {'product_name': product.product_name,
-                                'product_url': product.product_url,
-                                'product_image_url': product.product_image_url,
-                                'product_rating': str(product.product_rating),
-                            }
-    print(offers[1].products.product_name)
+        products_dict.append({
+                        'id': count,
+                        'product_name': product.product_name,
+                        'product_url': product.product_url,
+                        'product_image_url': product.product_image_url,
+                        'product_rating': str(product.product_rating),
+                        })
     count = 0
-    for offer in offers:        
+    for offer in offers:
         count += 1
-        offers_dict[count] = {'product': offer.products.product_name,
-                                'seller_name': offer.seller_name,
-                                'main_seller': offer.main_seller,
-                                'product_price': str(offer.product_price),
-                            }
-    with open(f'data/{filename_one}.json', 'w') as out:
-        json.dump(products_dict, out)
-    with open(f'data/{filename_two}.json', 'w') as out:
-        json.dump(offers_dict, out)
+        offers_dict.append({
+                        'id': count,
+                        'product': offer.products.product_name,
+                        'seller_name': offer.seller_name,
+                        'main_seller': offer.main_seller,
+                        'product_price': str(offer.product_price),
+                        })
+    with codecs.open(f'data/{filename_one}.json', 'w', encoding='utf-8') as out:
+        json.dump(products_dict, out, ensure_ascii=False)
+    with codecs.open(f'data/{filename_two}.json', 'w', encoding='utf-8') as out:
+        json.dump(offers_dict, out, ensure_ascii=False)
     return redirect(reverse('home'))
 
 def database(request):
@@ -104,7 +107,7 @@ def database(request):
         return HttpResponse(json.dumps(json_response),
                 content_type='application/json')
     except Exception as error:
-        return HttpResponse(status=200)
+        return error
 
 def extractor(request):
     """ Main view to save product and offer details to database"""
@@ -211,7 +214,6 @@ def extractor(request):
                     else:
                         path = 2
                 if path==1:
-                    print('using path 1')
                     driver.execute_script("arguments[0].innerText = 'new_link'", autres_link)
                     button = driver.find_element_by_xpath("//*[text()='new_link']")
                     driver.execute_script("arguments[0].click();", button)
