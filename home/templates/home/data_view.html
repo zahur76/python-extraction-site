@@ -6,13 +6,26 @@
 {% endblock %}
 
 {% block content %}
-    <div class="h1 text-center">History data</div>    
+    <div class="h1 text-center">Data History</div>    
     <div class="row m-0">        
         <div class="col-12 mt-3">
             <a class="btn btn-dark h1" href="{% url 'home' %}">Home</a>
-        </div>                                 
-        <div class="col-12 text-center h4">{{ count }} Products</div>
-        <div class="col-12 text-center h4">{{ date }}</div>               
+        </div>
+        {% if products %}                                 
+            <div class="col-12 text-center h4">{{ count }} Products</div>        
+            <div class="col-12 text-center h4">Downloaded on: {{ date }}</div>            
+            <div class="col-8 col-md-4 col-lg-4 mt-2">
+                <form action="{% url 'data_view' %}" method="GET">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="search" class="form-control custom-select rounded-0 border-2 border-dark" name="q" placeholder="Product Name">
+                        <input type="hidden" class="hidden" name="filename" value='{{ file }}'>
+                        <button class="btn btn-outline-dark bg-dark text-light rounded-0 input-group-append ml-auto search-button" type="submit"><div class="text">Search</div></button>
+                    </div>                
+                </form> 
+            </div> 
+        {% else %} 
+        {% endif %}                
     </div>    
     <div class="data-form p-3">
         <form action="#" method="POST" id="data-form" enctype="multipart/form-data">
@@ -22,11 +35,8 @@
         </form>
     </div> 
     {% for product in products %}        
-        <div class="row m-1 mb-3 border-bottom border-dark">
-            
-                <div class="col-12"> 
-                    <div class="bg-secondary" href="{% url 'data_view_details' product_id=product.id %}"><b>{{ product.id }}.{{ product.product_name }}</b></div>
-                </div>
+        <div class="row m-1 mb-3 border-bottom border-dark">            
+                <div class="bg-secondary"><b>{{ product.id }}.{{ product.product_name }}</b></div>
                 <div class="h5 text-center border-bottom">Offers</div>
                 <div class="col-4 text-center">Seller name</div>
                 <div class="col-4 text-center">Is Main Seller</div>

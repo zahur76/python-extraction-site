@@ -13,7 +13,7 @@
         </div>
         <div class="row m-0 p-0 border-top d-flex justify-content-left">
             <div class="col-8 col-md-4 col-lg-4 mt-2">
-                <form action="{% url 'home' %}" method="GET" id="characterForm">
+                <form action="{% url 'home' %}" method="GET">
                     {% csrf_token %}
                     <div class="input-group">
                         <input type="search" class="form-control custom-select rounded-0 border-2 border-dark" name="q" placeholder="Product Name">

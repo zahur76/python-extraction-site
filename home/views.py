@@ -16,7 +16,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from django.db.models import Q
-from django.core import serializers
 from .models import Products, Offers
 
 
@@ -86,29 +85,52 @@ def save_database(request):
                         })
     with codecs.open(f'data/{filename_one}.json', 'w', encoding='utf-8') as out:
         json.dump(products_dict, out, ensure_ascii=False)
-    
+
     return redirect(reverse('home'))
 
 def data_view(request):
     if request.method == 'POST':
         file = request.FILES['filename']
         date = f'{file.name[1:5]}/{file.name[5:7]}/{file.name[7:9]}, time: {file.name[10:14]}'
-        print(date)
         data = json.load(file)
-        for a in data[0]['offers']:
-            print(a['seller name'])
         context = {
+            'file': file,
             'date': date,
             'count': len(data),
             'products': data,
         }
         return render(request, 'home/data_view.html', context)
+    if 'q' in request.GET:
+        filename = request.GET['filename']
+        query = request.GET['q']        
+        if query == '':
+            date = f'{filename[1:5]}/{filename[5:7]}/{filename[7:9]}, time: {filename[10:14]}'
+            with open(f'data/{filename}', encoding='utf-8') as json_file:
+                data = json.load(json_file)            
 
+            context = {
+                'file': filename,
+                'date': date,
+                'count': len(data),
+                'products': data,
+            }
+            return render(request, 'home/data_view.html', context)        
+        date = f'{filename[1:5]}/{filename[5:7]}/{filename[7:9]}, time: {filename[10:14]}'
+        with open(f'data/{filename}', encoding='utf-8') as json_file:
+            data = json.load(json_file)
+        products = []
+        for product in data:
+            if query.lower() in product['product_name'].lower():
+                products.append(product)
+
+        context = {
+                'file': filename,
+                'date': date,
+                'count': len(products),
+                'products': products,
+            }
+        return render(request, 'home/data_view.html', context)
     return render(request, 'home/data_view.html')
-
-def data_view_details(request, product_id):
-    print(product_name)
-    return render(request, 'home/data_view_details.html')
 
 def database(request):
     """
@@ -121,7 +143,6 @@ def database(request):
         total_count = soup_one.find('div', {'class':'Pagination_label__2nq-e'}).text.split()[-1]
         products = Products.objects.all()
         count = products.count()
-        print(count)
         json_response = {'count': count, 'total_count': total_count}
         return HttpResponse(json.dumps(json_response),
                 content_type='application/json')
@@ -155,8 +176,7 @@ def extractor(request):
                 data =  container[item]
                 count += 1
                 print(f'item {count}')
-                product_url = 'https://www.manomano.fr' + data.get('href')
-                # product_name = data.find('img')['alt'].split('of', 1)[-1].replace('"', '')
+                product_url = 'https://www.manomano.fr' + data.get('href')                
                 product_name = data.find('div', attrs={'class':re.compile('title_')})
                 product_image_url = data.find('img').get('src')
                 if 'https://cdn.' not in product_image_url:
