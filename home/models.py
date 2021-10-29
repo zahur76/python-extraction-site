@@ -30,5 +30,15 @@ class Offers(models.Model):
     offer_json = models.TextField()
 
     def __str__(self):
-        return str(self.products.product_name)
-   
+        return str(self.products)
+
+class HistoryJson(models.Model):
+
+    class Meta:
+        verbose_name_plural = "History_JSON"
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    product_json = models.TextField()
+
+    def __str__(self):
+        return str(self.created_at)

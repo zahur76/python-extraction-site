@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Offers, Products, Offers
+from .models import Offers, Products, Offers, HistoryJson
 # Register your models here.
 
 class ProductsAdmin(admin.ModelAdmin):
@@ -17,10 +17,10 @@ class OffersAdmin(admin.ModelAdmin):
         # Ordering in admin
     list_display = (
         'id',
-        'products',  
+        'products',
     )
     ordering = ('id',)
 
 admin.site.register(Products, ProductsAdmin)
 admin.site.register(Offers, OffersAdmin)
-
+admin.site.register(HistoryJson)

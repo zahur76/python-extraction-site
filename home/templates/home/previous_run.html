@@ -9,42 +9,23 @@
     <div class="h1 text-center">Data History</div>    
     <div class="row m-0">        
         <div class="col-12 mt-3">
-            <a class="btn btn-dark h1" href="{% url 'home' %}">Home</a>
-        </div> 
+            <a class="btn btn-dark h1" href="{% url 'data_view' %}">back</a>
+        </div>
         <div class="col-12 border-bottom">Previous Runs</div>       
         {% for result in history %}
             <a href="{% url 'previous_run' run_id=result.id %}">{{ forloop.counter }}.{{ result.created_at }}</a>
-        {% endfor %}
+        {% endfor %}        
         {% if products %}                                 
-            <div class="col-12 text-center h4">{{ count }} Products</div>        
-            <div class="col-12 text-center h4">Downloaded on: {{ date }}</div>            
-            <div class="col-8 col-md-4 col-lg-4 mt-2">                
-                <form action="{% url 'data_view' %}" method="GET">
-                    {% csrf_token %}
-                    <div class="input-group">
-                        <input type="search" class="form-control custom-select rounded-0 border-2 border-dark" name="q" 
-                            placeholder="Product Name">
-                        <input type="hidden" class="hidden" name="filename" value='{{ file }}'>
-                        <button class="btn btn-outline-dark bg-dark text-light rounded-0 input-group-append ml-auto search-button" type="submit"><div class="text">Search</div></button>
-                    </div>                
-                </form> 
-            </div> 
+            <div class="col-12 text-center h4">{{ products|length }} Products</div>        
+            <div class="col-12 text-center h4">Saved on: {{ date }}</div>         
         {% else %} 
         {% endif %}                
-    </div>    
-    <div class="data-form p-3">
-        <div class="col-12 m-2">Upload JSON file</div>
-        <form action="#" method="POST" id="data-form" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="file" id="myFile" name="filename" required>
-            <button class="btn btn-secondary" type="submit" form="data-form">Submit</button>
-        </form>
-    </div> 
+    </div>  
     {% for product in products %}        
         <div class="row m-1 mb-3 border-bottom border-dark">            
                 <div class="bg-secondary"><b>{{ product.id }}.{{ product.product_name }}</b></div>
-                <a class="col-12" target="_blank"><b>Product URL:</b> {{ product.product_url }}</a>
-                <a class="col-12" target="_blank"><b>Product image URL:</b> {{ product.product_image_url }}</a>
+                <div class="col-12"><b>Product URL:</b> {{ product.product_url }}</div>
+                <div class="col-12"><b>Product image URL:</b> {{ product.product_image_url }}</div>
                 <div class="col-12"><b>Product rating:</b> {{ product.product_rating }}</div>                
                 <div class="h5 text-center border-bottom">Offers</div>
                 <div class="col-4 text-center">Seller name</div>

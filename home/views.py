@@ -16,7 +16,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from django.db.models import Q
-from .models import Products, Offers
+from .models import HistoryJson, Products, Offers
 
 
 def offer_details(url, product):
@@ -45,10 +45,36 @@ def offer_details(url, product):
 
 def delete_products():
     """
-    function to delete product and offer database
+    function to save then delete product from current database
     """
+    products_dict = []
     products = Products.objects.all()
     offers = Offers.objects.all()
+    count = 0
+    for product in products:
+        all_product_offers = offers.filter(products__id=product.id)
+        count_two = 0
+        product_offers = []
+        for offer in all_product_offers:
+            count_two += 1
+            product_offers.append({
+                'seller name': offer.seller_name,
+                'main seller': offer.main_seller,
+                'product price': str(offer.product_price),
+            })
+        count += 1
+        products_dict.append({
+                        'id': count,
+                        'product_name': product.product_name,
+                        'product_url': product.product_url,
+                        'product_image_url': product.product_image_url,
+                        'product_rating': str(product.product_rating),
+                        'offers': product_offers,
+                        })
+    history = HistoryJson.objects.create(
+                    product_json = json.dumps(products_dict),
+                    )
+    history.save()
     if products:
         products.delete()
     if offers:
@@ -89,11 +115,16 @@ def save_database(request):
     return redirect(reverse('home'))
 
 def data_view(request):
+    """
+    View to show downloaded JSON data in data folder
+    """
+    history = HistoryJson.objects.all() 
     if request.method == 'POST':
         file = request.FILES['filename']
         date = f'{file.name[1:5]}/{file.name[5:7]}/{file.name[7:9]}, time: {file.name[10:14]}'
         data = json.load(file)
         context = {
+            'history': history,
             'file': file,
             'date': date,
             'count': len(data),
@@ -109,6 +140,7 @@ def data_view(request):
                 data = json.load(json_file)            
 
             context = {
+                'history': history,
                 'file': filename,
                 'date': date,
                 'count': len(data),
@@ -124,13 +156,31 @@ def data_view(request):
                 products.append(product)
 
         context = {
+                'history': history,
                 'file': filename,
                 'date': date,
                 'count': len(products),
                 'products': products,
             }
         return render(request, 'home/data_view.html', context)
-    return render(request, 'home/data_view.html')
+       
+    context = {
+        'history': history,
+    }
+    return render(request, 'home/data_view.html', context)
+
+def previous_run(request, run_id):
+    """
+    View to view JSON data stored in models
+    """
+    history = HistoryJson.objects.all()
+    data = get_object_or_404(HistoryJson, id=run_id)    
+    context = {
+        'date': data.created_at,
+        'history': history,
+        'products': json.loads(data.product_json),
+    }
+    return render(request, 'home/previous_run.html', context)
 
 def database(request):
     """
