@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}  
+    <link rel="stylesheet" href="{% static 'home/css/home.css' %}">          
+{% endblock %}
+
+{% block content %}
+    <div class="h1 text-center">History data</div>    
+    <div class="row m-0">        
+        <div class="col-12 mt-3">
+            <a class="btn btn-dark h1" href="{% url 'home' %}">Home</a>
+        </div>                                 
+        <div class="col-12 text-center h4">{{ count }} Products</div>
+        <div class="col-12 text-center h4">{{ date }}</div>               
+    </div>    
+    <div class="data-form p-3">
+        <form action="#" method="POST" id="data-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" id="myFile" name="filename">
+            <button class="btn btn-secondary" type="submit" form="data-form">Submit</button>
+        </form>
+    </div> 
+    {% for product in products %}        
+        <div class="row m-1 mb-3 border-bottom border-dark">
+            
+                <div class="col-12"> 
+                    <div class="bg-secondary" href="{% url 'data_view_details' product_id=product.id %}"><b>{{ product.id }}.{{ product.product_name }}</b></div>
+                </div>
+                <div class="h5 text-center border-bottom">Offers</div>
+                <div class="col-4 text-center">Seller name</div>
+                <div class="col-4 text-center">Is Main Seller</div>
+                <div class="col-4 text-center">Product price</div>
+                {% for offer in product.offers %}
+                    {% for key, value in offer.items %}
+                        <div class="col-4 text-center">
+                            {{ value }}
+                        </div>                        
+                    {% endfor %}
+                {% endfor %}              
+                               
+        </div>    
+    {% endfor %}              
+{% endblock %}
+
+{% block extra_js %}              
+    <script src="{% static 'home/js/home.js' %}" type="text/javascript"></script>
+{% endblock %}

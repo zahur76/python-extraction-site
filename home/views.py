@@ -60,13 +60,21 @@ def save_database(request):
     function to save database as json
     """
     products_dict = []
-    offers_dict = []
     filename_one = 'A' + time.strftime("%Y%m%d-%H%M%S")
-    filename_two = 'B' + time.strftime("%Y%m%d-%H%M%S")
     products = Products.objects.all()
     offers = Offers.objects.all()
     count = 0
     for product in products:
+        all_product_offers = offers.filter(products__id=product.id)
+        count_two = 0
+        product_offers = []
+        for offer in all_product_offers:
+            count_two += 1
+            product_offers.append({
+                'seller name': offer.seller_name,
+                'main seller': offer.main_seller,
+                'product price': str(offer.product_price),
+            })
         count += 1
         products_dict.append({
                         'id': count,
@@ -74,22 +82,33 @@ def save_database(request):
                         'product_url': product.product_url,
                         'product_image_url': product.product_image_url,
                         'product_rating': str(product.product_rating),
-                        })
-    count = 0
-    for offer in offers:
-        count += 1
-        offers_dict.append({
-                        'id': count,
-                        'product': offer.products.product_name,
-                        'seller_name': offer.seller_name,
-                        'main_seller': offer.main_seller,
-                        'product_price': str(offer.product_price),
+                        'offers': product_offers,
                         })
     with codecs.open(f'data/{filename_one}.json', 'w', encoding='utf-8') as out:
         json.dump(products_dict, out, ensure_ascii=False)
-    with codecs.open(f'data/{filename_two}.json', 'w', encoding='utf-8') as out:
-        json.dump(offers_dict, out, ensure_ascii=False)
+    
     return redirect(reverse('home'))
+
+def data_view(request):
+    if request.method == 'POST':
+        file = request.FILES['filename']
+        date = f'{file.name[1:5]}/{file.name[5:7]}/{file.name[7:9]}, time: {file.name[10:14]}'
+        print(date)
+        data = json.load(file)
+        for a in data[0]['offers']:
+            print(a['seller name'])
+        context = {
+            'date': date,
+            'count': len(data),
+            'products': data,
+        }
+        return render(request, 'home/data_view.html', context)
+
+    return render(request, 'home/data_view.html')
+
+def data_view_details(request, product_id):
+    print(product_name)
+    return render(request, 'home/data_view_details.html')
 
 def database(request):
     """
