@@ -163,7 +163,7 @@ def data_view(request):
                 'products': products,
             }
         return render(request, 'home/data_view.html', context)
-       
+   
     context = {
         'history': history,
     }

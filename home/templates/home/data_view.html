@@ -43,8 +43,8 @@
     {% for product in products %}        
         <div class="row m-1 mb-3 border-bottom border-dark">            
                 <div class="bg-secondary"><b>{{ product.id }}.{{ product.product_name }}</b></div>
-                <a class="col-12" target="_blank"><b>Product URL:</b> {{ product.product_url }}</a>
-                <a class="col-12" target="_blank"><b>Product image URL:</b> {{ product.product_image_url }}</a>
+                <div class="col-12"><b>Product URL:</b><a href="{{ product.product_url }}" target="_blank">{{ product.product_url }}</a></div>
+                <div class="col-12"><b>Product image URL:</b><a href="{{ product.product_image_url }}" target="_blank">{{ product.product_image_url }}</a></div>
                 <div class="col-12"><b>Product rating:</b> {{ product.product_rating }}</div>                
                 <div class="h5 text-center border-bottom">Offers</div>
                 <div class="col-4 text-center">Seller name</div>
