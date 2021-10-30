@@ -10,7 +10,8 @@
     <div class="row m-0">        
         <div class="col-12 mt-3">
             <a class="btn btn-dark h1" href="{% url 'data_view' %}">back</a>
-            <a class="btn btn-success h1 refresh" href="{% url 'save_database' history_id=data.id %}">Save database</a>
+            <a class="btn btn-success h1 refresh save" href="{% url 'save_database' history_id=data.id %}" 
+                data-toggle="tooltip" data-placement="top" title="save as json">Save database</a>
         </div>
         <div class="col-12 border-bottom">Previous Runs</div>       
         {% for result in history %}
