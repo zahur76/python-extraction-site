@@ -47,9 +47,9 @@
                 <div class="col-12"><b>Product image URL:</b><a href="{{ product.product_image_url }}" target="_blank">{{ product.product_image_url }}</a></div>
                 <div class="col-12"><b>Product rating:</b> {{ product.product_rating }}</div>                
                 <div class="h5 text-center border-bottom">Offers</div>
-                <div class="col-4 text-center">Seller name</div>
-                <div class="col-4 text-center">Is Main Seller</div>
-                <div class="col-4 text-center">Product price</div>
+                <div class="col-4 text-center border-bottom">Seller name</div>
+                <div class="col-4 text-center border-bottom">Is Main Seller</div>
+                <div class="col-4 text-center border-bottom">Product price</div>
                 {% for offer in product.offers %}
                     {% for key, value in offer.items %}
                         <div class="col-4 text-center">

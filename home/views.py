@@ -80,45 +80,24 @@ def delete_products():
     if offers:
         offers.delete()
 
-def save_database(request):
+def save_database(request, history_id):
     """
     function to save database as json
     """
-    products_dict = []
-    filename_one = 'A' + time.strftime("%Y%m%d-%H%M%S")
-    products = Products.objects.all()
-    offers = Offers.objects.all()
-    count = 0
-    for product in products:
-        all_product_offers = offers.filter(products__id=product.id)
-        count_two = 0
-        product_offers = []
-        for offer in all_product_offers:
-            count_two += 1
-            product_offers.append({
-                'seller name': offer.seller_name,
-                'main seller': offer.main_seller,
-                'product price': str(offer.product_price),
-            })
-        count += 1
-        products_dict.append({
-                        'id': count,
-                        'product_name': product.product_name,
-                        'product_url': product.product_url,
-                        'product_image_url': product.product_image_url,
-                        'product_rating': str(product.product_rating),
-                        'offers': product_offers,
-                        })
-    with codecs.open(f'data/{filename_one}.json', 'w', encoding='utf-8') as out:
-        json.dump(products_dict, out, ensure_ascii=False)
+    
+    data = get_object_or_404(HistoryJson, id=history_id)
+    filename = 'A' + time.strftime("%Y%m%d-%H%M%S")
 
-    return redirect(reverse('home'))
+    with open(f'data/{filename}.json', 'w') as out:
+        out.write(data.product_json)
+
+    return redirect(reverse('previous_run', args={history_id}))
 
 def data_view(request):
     """
     View to show downloaded JSON data in data folder
     """
-    history = HistoryJson.objects.all() 
+    history = HistoryJson.objects.all()
     if request.method == 'POST':
         file = request.FILES['filename']
         date = f'{file.name[1:5]}/{file.name[5:7]}/{file.name[7:9]}, time: {file.name[10:14]}'
@@ -163,7 +142,7 @@ def data_view(request):
                 'products': products,
             }
         return render(request, 'home/data_view.html', context)
-   
+
     context = {
         'history': history,
     }
@@ -174,8 +153,9 @@ def previous_run(request, run_id):
     View to view JSON data stored in models
     """
     history = HistoryJson.objects.all()
-    data = get_object_or_404(HistoryJson, id=run_id)    
+    data = get_object_or_404(HistoryJson, id=run_id)
     context = {
+        'data': data,
         'date': data.created_at,
         'history': history,
         'products': json.loads(data.product_json),
