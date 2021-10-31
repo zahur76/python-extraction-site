@@ -2,11 +2,11 @@
     All imports
 """
 import concurrent.futures
-import codecs
 import math
 import json
 import re
 import time
+from django.db.models import Q
 from django.shortcuts import (
     render, reverse, redirect, get_object_or_404, HttpResponse)
 import requests
@@ -15,7 +15,6 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from django.db.models import Q
 from .models import HistoryJson, Products, Offers
 
 
@@ -45,7 +44,18 @@ def offer_details(url, product):
 
 def delete_products():
     """
-    function to save then delete product from current database
+    function to delete product from current database before new run
+    """
+    products = Products.objects.all()
+    offers = Offers.objects.all()
+    if products:
+        products.delete()
+    if offers:
+        offers.delete()
+
+def autosave_run():
+    """
+    function to autosave database as json to model after run completion
     """
     products_dict = []
     products = Products.objects.all()
@@ -75,20 +85,16 @@ def delete_products():
                     product_json = json.dumps(products_dict),
                     )
     history.save()
-    if products:
-        products.delete()
-    if offers:
-        offers.delete()
 
 def save_database(request, history_id):
     """
     function to save database as json
     """
-    
+
     data = get_object_or_404(HistoryJson, id=history_id)
     filename = 'A' + time.strftime("%Y%m%d-%H%M%S")
 
-    with open(f'data/{filename}.json', 'w') as out:
+    with open(f'data/{filename}.json', 'w' , encoding='utf-8') as out:
         out.write(data.product_json)
 
     return redirect(reverse('previous_run', args={history_id}))
@@ -112,12 +118,11 @@ def data_view(request):
         return render(request, 'home/data_view.html', context)
     if 'q' in request.GET:
         filename = request.GET['filename']
-        query = request.GET['q']        
+        query = request.GET['q']
         if query == '':
             date = f'{filename[1:5]}/{filename[5:7]}/{filename[7:9]}, time: {filename[10:14]}'
             with open(f'data/{filename}', encoding='utf-8') as json_file:
-                data = json.load(json_file)            
-
+                data = json.load(json_file)
             context = {
                 'history': history,
                 'file': filename,
@@ -125,7 +130,7 @@ def data_view(request):
                 'count': len(data),
                 'products': data,
             }
-            return render(request, 'home/data_view.html', context)        
+            return render(request, 'home/data_view.html', context)
         date = f'{filename[1:5]}/{filename[5:7]}/{filename[7:9]}, time: {filename[10:14]}'
         with open(f'data/{filename}', encoding='utf-8') as json_file:
             data = json.load(json_file)
@@ -191,7 +196,8 @@ def extractor(request):
     pages = math.ceil(int(result_one)/int(result_two))
     count = 0
     product_dict = {}
-    for page in range(1, pages+1):
+    # for page in range(1, pages+1):
+    for page in range(1, 2):
         url_two = "https://www.manomano.fr/scie-a-main-et-lames-de-scie-493"
         try:
             response_two = requests.get(url_two, {'page':page})
@@ -201,12 +207,13 @@ def extractor(request):
         container = soup_two.find_all('a', attrs={'class':re.compile('root_'),
             'href': re.compile('/p/')})
         items_on_page = len(container)
-        for item in range(0, items_on_page):
+        # for item in range(0, items_on_page):
+        for item in range(0, 5):
             try:
                 data =  container[item]
                 count += 1
                 print(f'item {count}')
-                product_url = 'https://www.manomano.fr' + data.get('href')                
+                product_url = 'https://www.manomano.fr' + data.get('href')
                 product_name = data.find('div', attrs={'class':re.compile('title_')})
                 product_image_url = data.find('img').get('src')
                 if 'https://cdn.' not in product_image_url:
@@ -349,6 +356,7 @@ def extractor(request):
                 print(offers)
             except Exception as error:
                 print(str(error))
+    autosave_run()
     return redirect(reverse('home'))
 
 def home(request):
