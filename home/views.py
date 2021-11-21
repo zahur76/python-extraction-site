@@ -191,13 +191,12 @@ def extractor(request):
     url = "https://www.manomano.fr/scie-a-main-et-lames-de-scie-493"
     response_one = requests.get(url)
     soup_one= BeautifulSoup(response_one.content, "html.parser")
-    result_one = soup_one.find('div', {'class':'Pagination_label__2nq-e'}).text.split()[-1]
-    result_two = soup_one.find('div', {'class':'Pagination_label__2nq-e'}).text.split()[0]
-    pages = math.ceil(int(result_one)/int(result_two))
+    page_link = soup_one.find_all('a', attrs={'href':re.compile(
+        '/scie-a-main-et-lames')})[-2]["href"].split("=")[-1]
+    pages = int(page_link)
     count = 0
     product_dict = {}
-    # for page in range(1, pages+1):
-    for page in range(1, 2):
+    for page in range(1, pages+1):
         url_two = "https://www.manomano.fr/scie-a-main-et-lames-de-scie-493"
         try:
             response_two = requests.get(url_two, {'page':page})
@@ -207,8 +206,7 @@ def extractor(request):
         container = soup_two.find_all('a', attrs={'class':re.compile('root_'),
             'href': re.compile('/p/')})
         items_on_page = len(container)
-        # for item in range(0, items_on_page):
-        for item in range(0, 5):
+        for item in range(0, items_on_page):
             try:
                 data =  container[item]
                 count += 1
